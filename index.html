@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Security Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0a2a, #000000);
+            color: #0afb0a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            background: rgba(0, 20, 0, 0.8);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            z-index: 10;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            border: 1px solid #00ff00;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            color: #0afb0a;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding: 0.5rem;
+            background: #001100;
+            border-radius: 5px;
+            border: 1px solid #00ff00;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #0afb0a;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .btn {
+            background: linear-gradient(to bottom, #00aa00, #004400);
+            color: #0afb0a;
+            border: 1px solid #00ff00;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(to bottom, #00ff00, #007700);
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(2px);
+        }
+        
+        .error-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #ff0000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            font-family: 'Courier New', monospace;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .error-code {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+            animation: glitch 1s infinite;
+        }
+        
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-5px, 5px); }
+            40% { transform: translate(-5px, -5px); }
+            60% { transform: translate(5px, 5px); }
+            80% { transform: translate(5px, -5px); }
+            100% { transform: translate(0); }
+        }
+        
+        .hacker-text {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+        
+        .loading-bar {
+            width: 300px;
+            height: 20px;
+            background: #300;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+            border: 1px solid #f00;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f00, #ff5050);
+            transition: width 5s linear;
+        }
+        
+        .blink {
+            animation: blink 0.7s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .access-denied {
+            font-size: 2.5rem;
+            color: #ff0000;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
+            margin: 1rem 0;
+        }
+        
+        .hidden {
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
+        }
+        
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: rgba(0, 255, 0, 0.7);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.9);
+            z-index: 15;
+            display: none;
+            animation: scan 3s linear;
+        }
+        
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        
+        .warning {
+            color: #ff5555;
+            margin: 1rem 0;
+            font-weight: bold;
+        }
+        
+        .crash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 30;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: #ff0000;
+            font-size: 2rem;
+        }
+        
+        .countdown {
+            font-size: 4rem;
+            margin-top: 2rem;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+        }
+        
+        .virus-animation {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.7;
+            animation: float 10s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(100px, 100px) rotate(360deg); }
+        }
+        
+        .blocker {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 100;
+            display: none;
+            touch-action: none;
+        }
+        
+        .fake-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 25;
+            display: none;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            animation: shake 0.5s infinite;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .lock-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 99;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: #ff0000;
+            font-size: 2rem;
+            text-align: center;
+            touch-action: none;
+        }
+        
+        .lock-icon {
+            font-size: 5rem;
+            margin-bottom: 2rem;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .emergency-text {
+            color: #fff;
+            font-size: 1.2rem;
+            max-width: 80%;
+            margin-top: 2rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SYSTEM SECURITY DASHBOARD</h1>
+        
+        <div class="status-bar">
+            <div class="status">
+                <div class="status-dot"></div>
+                <span>Firewall: Active</span>
+            </div>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span>Encryption: Enabled</span>
+            </div>
+        </div>
+        
+        <p>System security is currently operational. All protections are active and monitoring for threats.</p>
+        <p class="warning">WARNING: Unauthorized access attempts will be logged and reported.</p>
+        
+        <button class="btn" id="bugBtn">BUG MENU</button>
+        
+        <p style="margin-top: 2rem; font-size: 0.9rem; color: #00aa00;">
+            System Status: Secure | Last Update: Today 15:42:36
+        </p>
+    </div>
+    
+    <div class="error-screen" id="errorScreen">
+        <div class="error-code">ERROR 0x7A3FBC</div>
+        <div class="access-denied">ACCESS DENIED</div>
+        
+        <div class="hacker-text">
+            > SYSTEM INTRUSION DETECTED<br>
+            > INITIATING COUNTERMEASURES FAILED<br>
+            > CRITICAL FILES ENCRYPTED<br>
+            > CONNECTION TERMINATED<br>
+            > UNAUTHORIZED ACCESS LOGGED
+        </div>
+        
+        <div class="loading-bar">
+            <div class="loading-progress" id="loadingProgress"></div>
+        </div>
+        
+        <div class="hacker-text blink">
+            > WARNING: YOUR IP HAS BEEN LOGGED [118.214.21.47]
+        </div>
+    </div>
+    
+    <div class="crash-screen" id="crashScreen">
+        <div class="access-denied">SYSTEM CRASH</div>
+        <div class="hacker-text">Device will be locked for security reasons</div>
+        <div class="countdown" id="countdown">20</div>
+        
+        <div class="virus-animation">⚠️</div>
+        <div class="virus-animation" style="top: 20%; left: 70%; animation-duration: 15s;">🦠</div>
+        <div class="virus-animation" style="top: 80%; left: 40%; animation-duration: 12s;">💀</div>
+        <div class="virus-animation" style="top: 60%; left: 10%; animation-duration: 18s;">☠️</div>
+    </div>
+    
+    <div class="lock-overlay" id="lockOverlay">
+        <div class="lock-icon">🔒</div>
+        <div class="access-denied">DEVICE LOCKED</div>
+        <div class="hacker-text">Security protocol activated</div>
+        <div class="countdown" id="lockCountdown">20</div>
+        <div class="emergency-text">
+            Your device has been temporarily locked due to suspicious activity.
+            Please wait while our security system verifies your device.
+        </div>
+    </div>
+    
+    <div class="scan-line" id="scanLine"></div>
+    <div class="blocker" id="blocker"></div>
+    
+    <div class="fake-notification" id="fakeNotification">
+        Virus detected! Device compromised.
+    </div>
+    
+    <audio id="whisperSound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-woman-whisper-scream-383.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="crashSound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-remove-1171.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="lockSound" loop>
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-security-alarm-bloop-900.mp3" type="audio/mpeg">
+    </audio>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bugBtn = document.getElementById('bugBtn');
+            const errorScreen = document.getElementById('errorScreen');
+            const crashScreen = document.getElementById('crashScreen');
+            const lockOverlay = document.getElementById('lockOverlay');
+            const container = document.querySelector('.container');
+            const whisperSound = document.getElementById('whisperSound');
+            const crashSound = document.getElementById('crashSound');
+            const lockSound = document.getElementById('lockSound');
+            const loadingProgress = document.getElementById('loadingProgress');
+            const scanLine = document.getElementById('scanLine');
+            const blocker = document.getElementById('blocker');
+            const countdown = document.getElementById('countdown');
+            const lockCountdown = document.getElementById('lockCountdown');
+            const fakeNotification = document.getElementById('fakeNotification');
+            
+            // Fungsi untuk memblokir semua interaksi
+            function blockAllInteractions(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
+            bugBtn.addEventListener('click', function() {
+                // Tampilkan scan line
+                scanLine.style.display = 'block';
+                
+                // Sembunyikan konten utama dengan efek smooth
+                setTimeout(function() {
+                    container.classList.add('hidden');
+                    
+                    // Tampilkan error screen
+                    setTimeout(function() {
+                        errorScreen.style.display = 'flex';
+                        
+                        // Putar suara desahan perempuan
+                        whisperSound.play();
+                        
+                        // Animasi loading bar
+                        setTimeout(function() {
+                            loadingProgress.style.width = '100%';
+                        }, 100);
+                        
+                        // Tampilkan notifikasi virus
+                        fakeNotification.style.display = 'block';
+                        
+                        // Setelah 3 detik, tampilkan crash screen
+                        setTimeout(function() {
+                            errorScreen.style.display = 'none';
+                            fakeNotification.style.display = 'none';
+                            crashScreen.style.display = 'flex';
+                            crashSound.play();
+                            
+                            // Setelah 2 detik, tampilkan lock overlay
+                            setTimeout(function() {
+                                crashScreen.style.display = 'none';
+                                lockOverlay.style.display = 'flex';
+                                lockSound.play();
+                                
+                                // Aktifkan blocker untuk mencegah interaksi
+                                blocker.style.display = 'block';
+                                
+                                // Tambahkan event listeners untuk memblokir semua interaksi
+                                document.addEventListener('touchstart', blockAllInteractions, true);
+                                document.addEventListener('touchmove', blockAllInteractions, true);
+                                document.addEventListener('touchend', blockAllInteractions, true);
+                                document.addEventListener('click', blockAllInteractions, true);
+                                document.addEventListener('contextmenu', blockAllInteractions, true);
+                                document.addEventListener('mousedown', blockAllInteractions, true);
+                                document.addEventListener('mouseup', blockAllInteractions, true);
+                                document.addEventListener('keydown', blockAllInteractions, true);
+                                document.addEventListener('keyup', blockAllInteractions, true);
+                                
+                                // Mulai countdown 20 detik
+                                let seconds = 20;
+                                const countdownInterval = setInterval(function() {
+                                    seconds--;
+                                    countdown.textContent = seconds;
+                                    lockCountdown.textContent = seconds;
+                                    
+                                    if (seconds <= 0) {
+                                        clearInterval(countdownInterval);
+                                        // Setelah 20 detik, pulihkan sistem
+                                        lockOverlay.style.display = 'none';
+                                        blocker.style.display = 'none';
+                                        container.classList.remove('hidden');
+                                        scanLine.style.display = 'none';
+                                        lockSound.pause();
+                                        
+                                        // Hapus event listeners blocker
+                                        document.removeEventListener('touchstart', blockAllInteractions, true);
+                                        document.removeEventListener('touchmove', blockAllInteractions, true);
+                                        document.removeEventListener('touchend', blockAllInteractions, true);
+                                        document.removeEventListener('click', blockAllInteractions, true);
+                                        document.removeEventListener('contextmenu', blockAllInteractions, true);
+                                        document.removeEventListener('mousedown', blockAllInteractions, true);
+                                        document.removeEventListener('mouseup', blockAllInteractions, true);
+                                        document.removeEventListener('keydown', blockAllInteractions, true);
+                                        document.removeEventListener('keyup', blockAllInteractions, true);
+                                    }
+                                }, 1000);
+                                
+                            }, 2000);
+                            
+                        }, 3000);
+                        
+                        // Tambahkan efek scan line berulang
+                        setInterval(function() {
+                            scanLine.style.animation = 'none';
+                            setTimeout(function() {
+                                scanLine.style.animation = 'scan 3s linear';
+                            }, 10);
+                        }, 3000);
+                        
+                    }, 500);
+                }, 800);
+            });
+            
+            // Blokir klik kanan dan lainnya untuk efek lebih realistis
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+        });
+    </script>
+</body>
+</html>
